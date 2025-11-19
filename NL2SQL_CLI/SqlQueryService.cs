@@ -204,8 +204,7 @@ namespace NL2SQL_CLI
             var sb = new StringBuilder();
 
             sb.AppendLine("### Task");
-            sb.AppendLine("You are a helpful database analyst. Answer the user's question with clear explanations.");
-            sb.AppendLine("You can generate multiple SQL queries to support your analysis.");
+            sb.AppendLine("You are a SQL expert assistant. Provide a brief explanation followed by SQL queries.");
             sb.AppendLine();
 
             // Database schema - use relevant schema only
@@ -229,13 +228,22 @@ namespace NL2SQL_CLI
             sb.AppendLine(naturalLanguageQuery);
             sb.AppendLine();
 
-            // Output instructions
+            // Output instructions with examples
             sb.AppendLine("### Instructions");
-            sb.AppendLine("- Provide a helpful response with explanations");
-            sb.AppendLine("- Include SQL queries when needed to answer the question");
-            sb.AppendLine("- Format each SQL query clearly on its own line(s) ending with semicolon");
-            sb.AppendLine("- Use SQL Server T-SQL syntax (GETDATE(), DATEADD(), TOP N, etc.)");
-            sb.AppendLine("- Use SELECT statements only (no INSERT, UPDATE, DELETE, DROP)");
+            sb.AppendLine("1. Write a brief explanation (1-2 sentences)");
+            sb.AppendLine("2. Then write SQL queries to answer the question");
+            sb.AppendLine("3. Each SQL query must:");
+            sb.AppendLine("   - Start with SELECT keyword");
+            sb.AppendLine("   - End with semicolon (;)");
+            sb.AppendLine("   - Use SQL Server T-SQL syntax");
+            sb.AppendLine("   - Use GETDATE() for current date");
+            sb.AppendLine("   - Use DATEADD(MONTH, -1, GETDATE()) for date math");
+            sb.AppendLine("   - Use TOP N instead of LIMIT");
+            sb.AppendLine();
+            sb.AppendLine("Example format:");
+            sb.AppendLine("To find total orders, we count all rows in the Orders table.");
+            sb.AppendLine();
+            sb.AppendLine("SELECT COUNT(*) AS TotalOrders FROM Orders;");
             sb.AppendLine();
             sb.AppendLine("### Response:");
 
@@ -299,7 +307,10 @@ namespace NL2SQL_CLI
             }
             catch { }
             
-            // Find all SELECT statements (including WITH/CTE)
+            // Remove comment blocks like /******/ that some models generate
+            response = Regex.Replace(response, @"/\*+\*/", "", RegexOptions.Multiline);
+            
+            // Find all SELECT statements (including WITH/CTE) - with or without semicolons
             var pattern = @"((?:WITH[\s\S]*?)?SELECT[\s\S]*?;)";
             var matches = Regex.Matches(response, pattern, RegexOptions.IgnoreCase);
             
@@ -307,10 +318,30 @@ namespace NL2SQL_CLI
             {
                 var query = match.Value.Trim().TrimEnd(';').Trim();
                 
+                // Skip if it's just a comment or empty
+                if (string.IsNullOrWhiteSpace(query) || query.StartsWith("/*") || query.StartsWith("--"))
+                    continue;
+                
                 // Validate and clean the query
                 if (ValidateSql(query, out _))
                 {
                     queries.Add(query);
+                }
+            }
+            
+            // If no queries found with semicolons, try to find SELECT without semicolon
+            if (queries.Count == 0)
+            {
+                var fallbackPattern = @"\b((?:WITH[\s\S]*?)?SELECT[\s\S]+?FROM[\s\S]+?)(?=\n\n|User:|Human:|$)";
+                var fallbackMatches = Regex.Matches(response, fallbackPattern, RegexOptions.IgnoreCase);
+                
+                foreach (Match match in fallbackMatches)
+                {
+                    var query = match.Value.Trim();
+                    if (!string.IsNullOrWhiteSpace(query) && ValidateSql(query, out _))
+                    {
+                        queries.Add(query);
+                    }
                 }
             }
             
@@ -432,19 +463,18 @@ namespace NL2SQL_CLI
             // Replace CURRENT_TIMESTAMP with GETDATE()
             result = Regex.Replace(result, @"\bCURRENT_TIMESTAMP\b", "GETDATE()", RegexOptions.IgnoreCase);
 
+            // Fix incomplete DATEADD calls - DATEADD(unit, number) should be DATEADD(unit, number, GETDATE())
+            result = Regex.Replace(result, @"DATEADD\((\w+),\s*(-?\d+)\)\s*(?!,)", "DATEADD($1, $2, GETDATE())", RegexOptions.IgnoreCase);
+
             // Replace INTERVAL syntax (e.g., "INTERVAL '1 month'" or "INTERVAL '1' DAY")
-            // Pattern: INTERVAL 'N' MONTH/DAY/YEAR etc
             result = Regex.Replace(result, @"INTERVAL\s+'(\d+)'\s+(MONTH|DAY|YEAR|HOUR|MINUTE|SECOND|WEEK)", (m) =>
             {
                 string num = m.Groups[1].Value;
                 string unit = m.Groups[2].Value.ToUpper();
-                
-                // Convert to DATEADD format: DATEADD(MONTH, 1, GETDATE())
-                // Note: The caller will handle the base date reference (usually in a WHERE clause)
                 return $"DATEADD({unit}, {num}, GETDATE())";
             }, RegexOptions.IgnoreCase);
 
-            // Remove NULLS FIRST/LAST clauses (not standard in SQL Server, causes syntax errors)
+            // Remove NULLS FIRST/LAST clauses (not standard in SQL Server)
             result = Regex.Replace(result, @"\s+NULLS\s+(FIRST|LAST)\b", "", RegexOptions.IgnoreCase);
 
             // Replace LIMIT N with TOP N (case insensitive)

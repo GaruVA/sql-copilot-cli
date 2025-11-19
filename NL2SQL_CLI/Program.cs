@@ -280,6 +280,7 @@ namespace NL2SQL_CLI
             Console.WriteLine();
             Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
             Console.WriteLine("║              Running Automated Test Suite                  ║");
+            Console.WriteLine("║           (Auto-executing all queries)                     ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
             Console.WriteLine();
 
@@ -296,12 +297,15 @@ namespace NL2SQL_CLI
 
             int passed = 0;
             int failed = 0;
+            int totalQueries = 0;
+            var timings = new List<double>();
 
             for (int i = 0; i < testQueries.Length; i++)
             {
                 Console.WriteLine($"[Test {i + 1}/{testQueries.Length}] {testQueries[i]}");
+                Console.WriteLine();
 
-                // Reset context before each query to avoid state issues
+                // Reset context before each query
                 if (i > 0)
                 {
                     llmService.ResetContext();
@@ -310,27 +314,92 @@ namespace NL2SQL_CLI
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    var result = await sqlService.ProcessNaturalLanguageQueryAsync(testQueries[i]);
-                    sw.Stop();
+                    // Generate conversational response
+                    var response = await sqlService.GenerateResponseAsync(testQueries[i]);
+                    var generationTime = sw.Elapsed.TotalSeconds;
+                    timings.Add(generationTime);
 
-                    if (result.Success)
+                    // Display AI response (truncated)
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    var truncatedResponse = response.FullAiResponse.Length > 150 
+                        ? response.FullAiResponse.Substring(0, 150) + "..." 
+                        : response.FullAiResponse;
+                    Console.WriteLine($"  Response: {truncatedResponse.Replace("\n", " ")}");
+                    Console.ResetColor();
+                    Console.WriteLine();
+
+                    // Check if queries were extracted
+                    if (!response.HasQueries)
                     {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"  ✓ PASS ({sw.Elapsed.TotalSeconds:F2}s) - {result.ResultData?.Rows.Count ?? 0} rows");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"  ✗ FAIL: No SQL queries found in response ({generationTime:F2}s)");
                         Console.ResetColor();
-                        Console.WriteLine($"  SQL: {result.GeneratedSql?.Replace("\n", " ").Substring(0, Math.Min(80, result.GeneratedSql?.Length ?? 0)) ?? "N/A"}...");
-                        passed++;
+                        failed++;
                     }
                     else
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"  ✗ FAIL: {result.ErrorMessage}");
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"  Found {response.ExtractedSqlQueries.Count} SQL {(response.ExtractedSqlQueries.Count == 1 ? "query" : "queries")}");
                         Console.ResetColor();
-                        failed++;
+
+                        // Auto-execute all queries
+                        int queryPassed = 0;
+                        int queryFailed = 0;
+
+                        for (int q = 0; q < response.ExtractedSqlQueries.Count; q++)
+                        {
+                            var query = response.ExtractedSqlQueries[q];
+                            totalQueries++;
+
+                            Console.WriteLine($"  [SQL {q + 1}/{response.ExtractedSqlQueries.Count}]");
+                            var queryPreview = query.Replace("\n", " ").Substring(0, Math.Min(60, query.Length));
+                            Console.WriteLine($"    {queryPreview}...");
+
+                            var execSw = Stopwatch.StartNew();
+                            try
+                            {
+                                var results = await sqlService.ExecuteQueryAsync(query);
+                                execSw.Stop();
+
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine($"    ✓ Executed in {execSw.Elapsed.TotalSeconds:F2}s - {results.Rows.Count} rows");
+                                Console.ResetColor();
+                                queryPassed++;
+                            }
+                            catch (Exception ex)
+                            {
+                                execSw.Stop();
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"    ✗ Failed: {ex.Message}");
+                                Console.ResetColor();
+                                queryFailed++;
+                            }
+                        }
+
+                        sw.Stop();
+
+                        // Overall test result
+                        if (queryFailed == 0)
+                        {
+                            Console.WriteLine();
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"  ✓ PASS ({sw.Elapsed.TotalSeconds:F2}s total) - All {queryPassed} queries executed");
+                            Console.ResetColor();
+                            passed++;
+                        }
+                        else
+                        {
+                            Console.WriteLine();
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"  ✗ FAIL ({sw.Elapsed.TotalSeconds:F2}s total) - {queryFailed}/{response.ExtractedSqlQueries.Count} queries failed");
+                            Console.ResetColor();
+                            failed++;
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
+                    sw.Stop();
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"  ✗ ERROR: {ex.Message}");
                     Console.ResetColor();
@@ -340,9 +409,18 @@ namespace NL2SQL_CLI
                 Console.WriteLine();
             }
 
+            // Summary
             Console.WriteLine("═══════════════════════════════════════════════════════════");
             Console.WriteLine($"Test Results: {passed} passed, {failed} failed");
             Console.WriteLine($"Success Rate: {(passed * 100.0 / testQueries.Length):F1}%");
+            Console.WriteLine($"Total SQL Queries Executed: {totalQueries}");
+            if (timings.Count > 0)
+            {
+                var avgTime = timings.Average();
+                var minTime = timings.Min();
+                var maxTime = timings.Max();
+                Console.WriteLine($"Generation Time: Avg={avgTime:F2}s, Min={minTime:F2}s, Max={maxTime:F2}s");
+            }
             Console.WriteLine("═══════════════════════════════════════════════════════════");
             Console.WriteLine();
         }
