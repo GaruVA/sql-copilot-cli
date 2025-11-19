@@ -154,7 +154,7 @@ namespace NL2SQL_CLI
             var inferenceParams = new InferenceParams
             {
                 MaxTokens = maxTokens,
-                AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:", "SELECT COUNT(OrderID) AS TotalOrders FROM dbo.Orders" }
+                AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:", "\n\nSELECT", "TotalOrders\n" }
             };
 
             var sb = new StringBuilder();

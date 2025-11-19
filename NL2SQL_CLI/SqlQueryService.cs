@@ -219,11 +219,11 @@ namespace NL2SQL_CLI
             // Output instructions with examples
             sb.AppendLine("### Instructions");
             sb.AppendLine("CRITICAL RULES:");
-            sb.AppendLine("- Answer ONLY the current question with ONE query");
-            sb.AppendLine("- Do NOT repeat the same query multiple times");
-            sb.AppendLine("- ONLY use tables and columns that exist in the schema above");
-            sb.AppendLine($"- Available tables: {string.Join(", ", _validTableNames.OrderBy(t => t))}");
-            sb.AppendLine("- Do NOT invent table or column names - use ONLY what is shown in the schema");
+            sb.AppendLine("- Generate exactly ONE SQL query - do NOT generate multiple variations");
+            sb.AppendLine("- Use EXACT table names from schema (case-sensitive): " + string.Join(", ", _validTableNames.OrderBy(t => t)));
+            sb.AppendLine("- Use EXACT column names shown in schema - do NOT approximate or shorten names");
+            sb.AppendLine("- If a table doesn't exist in the schema, you CANNOT use it");
+            sb.AppendLine("- After writing ONE query, immediately end with ### marker");
             sb.AppendLine();
             sb.AppendLine("SQL Format:");
             sb.AppendLine("1. Brief explanation (1 sentence)");
