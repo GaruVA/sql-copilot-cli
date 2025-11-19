@@ -19,6 +19,13 @@ namespace NL2SQL_CLI
         public TimeSpan ProcessingTime { get; set; }
     }
 
+    public class QueryResponse
+    {
+        public string FullAiResponse { get; set; } = string.Empty;
+        public List<string> ExtractedSqlQueries { get; set; } = new();
+        public bool HasQueries => ExtractedSqlQueries.Count > 0;
+    }
+
     public class SqlQueryService
     {
         private readonly LlmInferenceService _llmService;
@@ -74,64 +81,37 @@ namespace NL2SQL_CLI
             });
         }
 
-        public async Task<QueryResult> ProcessNaturalLanguageQueryAsync(string naturalLanguageQuery)
+        public async Task<QueryResponse> GenerateResponseAsync(string naturalLanguageQuery)
         {
-            var sw = Stopwatch.StartNew();
-            var result = new QueryResult();
+            var response = new QueryResponse();
 
             try
             {
                 Console.WriteLine();
-                Console.WriteLine("  → [PROCESS] Starting query processing...");
+                Console.WriteLine("  → [GENERATE] Building conversational prompt...");
 
-                // Step 1: Build the prompt
-                string prompt = BuildPrompt(naturalLanguageQuery);
-                Console.WriteLine($"  → [PROCESS] Prompt size: {prompt.Length} characters");
+                // Build conversational prompt
+                string prompt = BuildConversationalPrompt(naturalLanguageQuery);
+                Console.WriteLine($"  → [GENERATE] Prompt size: {prompt.Length} characters");
 
-                // Step 2: Generate SQL using LLM
-                Console.WriteLine("  → [PROCESS] Step 2: Calling LLM to generate SQL...");
-                string llmResponse = await _llmService.GenerateSqlAsync(prompt, maxTokens: 512);
-                Console.WriteLine($"  → [PROCESS] LLM Response received: {llmResponse.Length} characters");
+                // Generate conversational response using LLM
+                Console.WriteLine("  → [GENERATE] Calling LLM for conversational response...");
+                string llmResponse = await _llmService.GenerateResponseAsync(prompt, maxTokens: 384);
+                Console.WriteLine($"  → [GENERATE] Response received: {llmResponse.Length} characters");
 
-                // Step 3: Extract SQL from response
-                Console.WriteLine("  → [PROCESS] Step 3: Extracting SQL from response...");
-                string generatedSql = ExtractSqlFromResponse(llmResponse);
-                result.GeneratedSql = generatedSql;
+                response.FullAiResponse = llmResponse;
 
-                if (string.IsNullOrWhiteSpace(generatedSql))
-                {
-                    result.Success = false;
-                    result.ErrorMessage = "Failed to extract SQL from model response";
-                    Console.WriteLine($"  → [PROCESS] FAIL: {result.ErrorMessage}");
-                    return result;
-                }
+                // Extract all SQL queries from response
+                Console.WriteLine("  → [GENERATE] Extracting SQL queries from response...");
+                response.ExtractedSqlQueries = ExtractAllSqlQueries(llmResponse);
+                Console.WriteLine($"  → [GENERATE] Found {response.ExtractedSqlQueries.Count} SQL queries");
 
-                Console.WriteLine($"  → [PROCESS] SQL extracted successfully: {generatedSql.Length} characters");
-
-                // Step 3.5: Convert to T-SQL if needed
-                Console.WriteLine("  → [PROCESS] Step 3.5: Converting to T-SQL syntax...");
-                generatedSql = ConvertToTSql(generatedSql);
-                Console.WriteLine($"  → [PROCESS] T-SQL conversion complete: {generatedSql.Length} characters");
-
-                // Step 4: Validate SQL
-                Console.WriteLine("  → [PROCESS] Step 4: Validating SQL...");
-                if (!ValidateSql(generatedSql, out string validationError))
-                {
-                    result.Success = false;
-                    result.ErrorMessage = $"SQL Validation Failed: {validationError}";
-                    return result;
-                }
-
-                // Step 5: Execute SQL
-                Console.WriteLine("  → [PROCESS] Step 5: Executing SQL query...");
-                result.ResultData = await ExecuteSqlQueryAsync(generatedSql);
-                result.Success = true;
-
-                Console.WriteLine($"  → [PROCESS] Query succeeded! Rows: {result.ResultData.Rows.Count}");
-
-                // Step 6: Update conversation history
+                // Update conversation history
                 _conversationHistory.Add($"Q: {naturalLanguageQuery}");
-                _conversationHistory.Add($"SQL: {generatedSql}");
+                if (response.HasQueries)
+                {
+                    _conversationHistory.Add($"SQL: {string.Join("; ", response.ExtractedSqlQueries.Take(2))}");
+                }
 
                 // Keep only last 4 exchanges (8 entries)
                 if (_conversationHistory.Count > 8)
@@ -141,12 +121,73 @@ namespace NL2SQL_CLI
             }
             catch (Exception ex)
             {
+                response.FullAiResponse = $"Error generating response: {ex.Message}";
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"  → [GENERATE] EXCEPTION: {ex.Message}");
+                Console.ResetColor();
+            }
+
+            return response;
+        }
+
+        public async Task<DataTable> ExecuteQueryAsync(string sql)
+        {
+            Console.WriteLine("  → [EXECUTE] Preparing to execute query...");
+            
+            // Convert to T-SQL if needed
+            sql = ConvertToTSql(sql);
+            
+            // Validate SQL
+            if (!ValidateSql(sql, out string validationError))
+            {
+                throw new InvalidOperationException($"SQL Validation Failed: {validationError}");
+            }
+
+            // Add safety limits
+            sql = AddSafetyLimits(sql);
+            
+            // Warn about expensive queries
+            if (IsExpensiveQuery(sql))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("  ⚠️  Warning: This query may be slow on large tables.");
+                Console.ResetColor();
+            }
+
+            // Execute SQL
+            return await ExecuteSqlQueryAsync(sql);
+        }
+
+        // Keep old method for backward compatibility during testing
+        public async Task<QueryResult> ProcessNaturalLanguageQueryAsync(string naturalLanguageQuery)
+        {
+            var sw = Stopwatch.StartNew();
+            var result = new QueryResult();
+
+            try
+            {
+                var response = await GenerateResponseAsync(naturalLanguageQuery);
+                
+                if (response.HasQueries)
+                {
+                    result.GeneratedSql = response.ExtractedSqlQueries[0];
+                    result.ResultData = await ExecuteQueryAsync(result.GeneratedSql);
+                    result.Success = true;
+                }
+                else
+                {
+                    result.Success = false;
+                    result.ErrorMessage = "No SQL queries found in response";
+                    result.GeneratedSql = response.FullAiResponse;
+                }
+            }
+            catch (Exception ex)
+            {
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
-                result.GeneratedSql = result.GeneratedSql ?? "Error occurred before SQL generation";
+                result.GeneratedSql = result.GeneratedSql ?? "Error occurred during processing";
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"  → [PROCESS] EXCEPTION: {ex.Message}");
-                Console.WriteLine($"  → [PROCESS] Stack Trace: {ex.StackTrace}");
                 Console.ResetColor();
             }
             finally
@@ -158,19 +199,18 @@ namespace NL2SQL_CLI
             return result;
         }
 
-        private string BuildPrompt(string naturalLanguageQuery)
+        private string BuildConversationalPrompt(string naturalLanguageQuery)
         {
             var sb = new StringBuilder();
 
-            // System instruction - clear and direct
             sb.AppendLine("### Task");
-            sb.AppendLine("Generate a SQL query to answer the following question based on the provided database schema.");
-            sb.AppendLine("Generate ONLY the SQL query with no explanations or markdown.");
+            sb.AppendLine("You are a helpful database analyst. Answer the user's question with clear explanations.");
+            sb.AppendLine("You can generate multiple SQL queries to support your analysis.");
             sb.AppendLine();
 
-            // Database schema
+            // Database schema - use relevant schema only
             sb.AppendLine("### Database Schema");
-            sb.AppendLine(_schemaContext ?? "");
+            sb.AppendLine(GetRelevantSchema(naturalLanguageQuery));
             sb.AppendLine();
 
             // Previous context for follow-up questions
@@ -191,23 +231,119 @@ namespace NL2SQL_CLI
 
             // Output instructions
             sb.AppendLine("### Instructions");
-            sb.AppendLine("- Write ONLY the SQL query");
-            sb.AppendLine("- Use SQL Server T-SQL syntax EXCLUSIVELY");
+            sb.AppendLine("- Provide a helpful response with explanations");
+            sb.AppendLine("- Include SQL queries when needed to answer the question");
+            sb.AppendLine("- Format each SQL query clearly on its own line(s) ending with semicolon");
+            sb.AppendLine("- Use SQL Server T-SQL syntax (GETDATE(), DATEADD(), TOP N, etc.)");
             sb.AppendLine("- Use SELECT statements only (no INSERT, UPDATE, DELETE, DROP)");
-            sb.AppendLine("- Use table aliases for clarity");
-            sb.AppendLine("- End the query with a semicolon");
             sb.AppendLine();
-            sb.AppendLine("### T-SQL Specific Rules (REQUIRED)");
-            sb.AppendLine("- Use GETDATE() for current date, NOT CURRENT_DATE");
-            sb.AppendLine("- Use DATEADD() for date arithmetic, NOT INTERVAL");
-            sb.AppendLine("- Use DATEDIFF() for date differences");
-            sb.AppendLine("- Use TOP N instead of LIMIT for row limiting");
-            sb.AppendLine("- Use ISNULL() or COALESCE() for null handling");
-            sb.AppendLine("- Example: SELECT TOP 5 * FROM Orders WHERE OrderDate >= DATEADD(MONTH, -1, GETDATE());");
-            sb.AppendLine();
-            sb.AppendLine("### SQL Query:");
+            sb.AppendLine("### Response:");
 
             return sb.ToString();
+        }
+
+        private string GetRelevantSchema(string userQuestion)
+        {
+            // Extract table names from schema context
+            var tables = new[] { "Orders", "Products", "Customers", "OrderDetails", "Categories", "Suppliers", "Employees" };
+            var lowerQuestion = userQuestion.ToLower();
+            
+            // Find tables mentioned in the question
+            var relevantTables = tables.Where(t => 
+                lowerQuestion.Contains(t.ToLower()) ||
+                lowerQuestion.Contains(t.TrimEnd('s').ToLower()) ||
+                lowerQuestion.Contains("order") && t == "Orders" ||
+                lowerQuestion.Contains("product") && t == "Products" ||
+                lowerQuestion.Contains("customer") && t == "Customers" ||
+                lowerQuestion.Contains("categor") && t == "Categories"
+            ).ToList();
+            
+            // If no specific tables found or if query is complex, return full schema
+            if (!relevantTables.Any() || lowerQuestion.Contains("all") || lowerQuestion.Contains("analyze"))
+            {
+                return _schemaContext ?? "";
+            }
+            
+            // Return only relevant table schemas
+            var lines = (_schemaContext ?? "").Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var result = new StringBuilder();
+            bool include = false;
+            
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("Table:"))
+                {
+                    include = relevantTables.Any(t => line.Contains(t, StringComparison.OrdinalIgnoreCase));
+                }
+                
+                if (include || line.StartsWith("Relationships:"))
+                {
+                    result.AppendLine(line);
+                }
+            }
+            
+            return result.Length > 0 ? result.ToString() : _schemaContext ?? "";
+        }
+
+        private List<string> ExtractAllSqlQueries(string response)
+        {
+            var queries = new List<string>();
+            
+            // Save raw response for debugging
+            try
+            {
+                var logDir = Path.Combine(Directory.GetCurrentDirectory(), "llm_logs");
+                Directory.CreateDirectory(logDir);
+                var logFile = Path.Combine(logDir, $"response_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt");
+                File.WriteAllText(logFile, response);
+            }
+            catch { }
+            
+            // Find all SELECT statements (including WITH/CTE)
+            var pattern = @"((?:WITH[\s\S]*?)?SELECT[\s\S]*?;)";
+            var matches = Regex.Matches(response, pattern, RegexOptions.IgnoreCase);
+            
+            foreach (Match match in matches)
+            {
+                var query = match.Value.Trim().TrimEnd(';').Trim();
+                
+                // Validate and clean the query
+                if (ValidateSql(query, out _))
+                {
+                    queries.Add(query);
+                }
+            }
+            
+            return queries;
+        }
+
+        private string AddSafetyLimits(string sql)
+        {
+            // If no WHERE clause and no TOP/LIMIT, add TOP 1000
+            if (!Regex.IsMatch(sql, @"\bWHERE\b", RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(sql, @"\bTOP\s+\d+\b", RegexOptions.IgnoreCase))
+            {
+                sql = Regex.Replace(sql, @"^(\s*SELECT)\s+", "$1 TOP 1000 ", RegexOptions.IgnoreCase);
+                Console.WriteLine("  → [SAFETY] Added TOP 1000 limit to query without WHERE clause");
+            }
+            
+            return sql;
+        }
+
+        private bool IsExpensiveQuery(string sql)
+        {
+            var expensive = new[]
+            {
+                // SELECT * without WHERE clause
+                @"SELECT\s+\*.*FROM.*(?!WHERE)",
+                // Cross joins
+                @"CROSS\s+JOIN",
+                // Multiple joins without WHERE
+                @"JOIN.*JOIN.*(?!WHERE)"
+            };
+            
+            return expensive.Any(pattern => 
+                Regex.IsMatch(sql, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline));
         }
 
         private string ExtractSqlFromResponse(string llmResponse)

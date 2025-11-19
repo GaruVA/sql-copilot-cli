@@ -111,51 +111,32 @@ namespace NL2SQL_CLI
             Console.WriteLine($"Question: {naturalLanguageQuery}");
             Console.ResetColor();
             Console.WriteLine("─────────────────────────────────────────────────────────────");
-
-            var sw = Stopwatch.StartNew();
+            Console.WriteLine();
 
             try
             {
-                // Reset context before each interactive query (except first)
-                Console.WriteLine("⏳ Preparing inference context...");
                 llmService.ResetContext();
                 
-                Console.WriteLine("⏳ Generating SQL...");
-                var result = await sqlService.ProcessNaturalLanguageQueryAsync(naturalLanguageQuery);
-                sw.Stop();
-
-                Console.WriteLine();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Generated SQL:");
-                Console.WriteLine("─────────────────────────────────────────────────────────────");
-                Console.WriteLine(result.GeneratedSql);
-                Console.WriteLine("─────────────────────────────────────────────────────────────");
+                // Generate response (no execution)
+                var response = await sqlService.GenerateResponseAsync(naturalLanguageQuery);
+                
+                // Display full AI response
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("AI Response:");
+                Console.WriteLine("═════════════════════════════════════════════════════════════");
+                Console.WriteLine(response.FullAiResponse);
+                Console.WriteLine("═════════════════════════════════════════════════════════════");
                 Console.ResetColor();
                 Console.WriteLine();
-
-                if (result.Success)
+                
+                // Interactive query execution
+                if (response.HasQueries)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"✓ Query executed successfully in {sw.Elapsed.TotalSeconds:F2} seconds");
-                    Console.WriteLine($"✓ Rows returned: {result.ResultData.Rows.Count}");
-                    Console.ResetColor();
-                    Console.WriteLine();
-
-                    // Display results
-                    if (result.ResultData.Rows.Count > 0)
-                    {
-                        DisplayResultsAsTable(result.ResultData);
-                    }
-                    else
-                    {
-                        Console.WriteLine("(No rows returned)");
-                    }
+                    await ExecuteQueriesInteractively(sqlService, response.ExtractedSqlQueries);
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"✗ Query failed: {result.ErrorMessage}");
-                    Console.ResetColor();
+                    Console.WriteLine("(No SQL queries to execute)");
                 }
             }
             catch (Exception ex)
@@ -168,12 +149,75 @@ namespace NL2SQL_CLI
             Console.WriteLine();
         }
 
+        static async Task ExecuteQueriesInteractively(SqlQueryService sqlService, List<string> queries)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"📊 Found {queries.Count} SQL {(queries.Count == 1 ? "query" : "queries")}.\n");
+            Console.ResetColor();
+            
+            for (int i = 0; i < queries.Count; i++)
+            {
+                var query = queries[i];
+                
+                Console.WriteLine($"[Query {i + 1}/{queries.Count}]");
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("─────────────────────────────────────────────────────────────");
+                Console.WriteLine(query);
+                Console.WriteLine("─────────────────────────────────────────────────────────────");
+                Console.ResetColor();
+                
+                Console.Write("Execute? (Press Enter=yes, 'c'=cancel all, 's'=skip): ");
+                var input = Console.ReadLine()?.Trim().ToLower() ?? "";
+                
+                if (input == "c")
+                {
+                    Console.WriteLine("❌ Cancelled remaining queries.\n");
+                    break;
+                }
+                
+                if (input == "s")
+                {
+                    Console.WriteLine("⏭️  Skipped.\n");
+                    continue;
+                }
+                
+                // Execute
+                Console.WriteLine("⏳ Executing...");
+                var sw = Stopwatch.StartNew();
+                
+                try
+                {
+                    var results = await sqlService.ExecuteQueryAsync(query);
+                    sw.Stop();
+                    
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"✓ Completed in {sw.Elapsed.TotalSeconds:F2}s - {results.Rows.Count} rows");
+                    Console.ResetColor();
+                    Console.WriteLine();
+                    
+                    if (results.Rows.Count > 0)
+                    {
+                        DisplayResultsAsTable(results);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sw.Stop();
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"✗ Query failed: {ex.Message}");
+                    Console.ResetColor();
+                }
+                
+                Console.WriteLine();
+            }
+        }
+
         static void DisplayResultsAsTable(DataTable data, int maxRows = 20)
         {
             if (data.Rows.Count == 0)
                 return;
 
-            // Calculate column widths
+            // Calculate column widths (max 30 chars per column)
             int[] columnWidths = new int[data.Columns.Count];
             for (int i = 0; i < data.Columns.Count; i++)
             {
@@ -182,9 +226,9 @@ namespace NL2SQL_CLI
                 {
                     string value = row[i]?.ToString() ?? "NULL";
                     if (value.Length > columnWidths[i])
-                        columnWidths[i] = Math.Min(value.Length, 50); // Cap at 50 chars
+                        columnWidths[i] = Math.Min(value.Length, 30); // Cap at 30 chars
                 }
-                columnWidths[i] += 2; // Padding
+                columnWidths[i] = Math.Max(columnWidths[i] + 2, 10); // Minimum 10 chars
             }
 
             // Print header
@@ -194,7 +238,10 @@ namespace NL2SQL_CLI
             Console.Write("│");
             for (int i = 0; i < data.Columns.Count; i++)
             {
-                string header = data.Columns[i].ColumnName.PadRight(columnWidths[i] - 1);
+                string header = data.Columns[i].ColumnName;
+                if (header.Length > columnWidths[i] - 1)
+                    header = header.Substring(0, columnWidths[i] - 4) + "...";
+                header = header.PadRight(columnWidths[i] - 1);
                 Console.Write($" {header}│");
             }
             Console.WriteLine();
@@ -209,8 +256,8 @@ namespace NL2SQL_CLI
                 for (int c = 0; c < data.Columns.Count; c++)
                 {
                     string value = data.Rows[r][c]?.ToString() ?? "NULL";
-                    if (value.Length > 50)
-                        value = value.Substring(0, 47) + "...";
+                    if (value.Length > columnWidths[c] - 1)
+                        value = value.Substring(0, columnWidths[c] - 4) + "...";
 
                     value = value.PadRight(columnWidths[c] - 1);
                     Console.Write($" {value}│");

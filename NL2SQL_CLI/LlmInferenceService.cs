@@ -139,6 +139,60 @@ namespace NL2SQL_CLI
             });
         }
 
+        public async Task<string> GenerateResponseAsync(string prompt, int maxTokens = 384)
+        {
+            if (!_isInitialized)
+                throw new InvalidOperationException("LLM service not initialized");
+
+            if (_executor == null)
+                throw new InvalidOperationException("Executor is null - model not properly initialized");
+
+            Console.WriteLine("  → Generating response...\n");
+            var startTime = DateTime.Now;
+
+            // Create inference params optimized for conversational responses
+            var inferenceParams = new InferenceParams
+            {
+                MaxTokens = maxTokens,
+                Temperature = 0.7f,
+                TopP = 0.9f,
+                AntiPrompts = new[] { "\n\nUser:", "\n\nHuman:", "###END###" }
+            };
+
+            var sb = new StringBuilder();
+            int tokenCount = 0;
+            
+            // Stream output in real-time
+            Console.ForegroundColor = ConsoleColor.Gray;
+            try
+            {
+                await foreach (var token in _executor.InferAsync(prompt, inferenceParams))
+                {
+                    Console.Write(token);  // Show user progress
+                    sb.Append(token);
+                    tokenCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"  ✗ Error during inference: {ex.Message}");
+                Console.ResetColor();
+                throw;
+            }
+            
+            Console.ResetColor();
+            Console.WriteLine("\n");
+
+            var elapsed = (DateTime.Now - startTime).TotalSeconds;
+            Console.WriteLine($"  → {tokenCount} tokens in {elapsed:F2}s ({(tokenCount/elapsed):F1} t/s)");
+
+            return sb.ToString().Trim();
+        }
+
+        // Keep old method for backward compatibility
         public async Task<string> GenerateSqlAsync(string prompt, int maxTokens = 512)
         {
             if (!_isInitialized)
@@ -152,13 +206,9 @@ namespace NL2SQL_CLI
             Console.WriteLine($"  → Prompt length: {prompt.Length} characters");
             var startTime = DateTime.Now;
 
-            // Create new inference params with minimal anti-prompts
-            // Only stop at obvious boundaries to avoid cutting off SQL
             var inferenceParams = new InferenceParams
             {
-                MaxTokens = maxTokens       // Maximum tokens to generate
-                // Removed AntiPrompts as they were triggering too early
-                // The model will naturally stop at EOS token
+                MaxTokens = maxTokens
             };
 
             Console.WriteLine("  → InferenceParams created successfully");
@@ -170,7 +220,6 @@ namespace NL2SQL_CLI
             try
             {
                 Console.WriteLine("  → Starting inference loop...");
-                // Get first token to check if model is responding
                 bool firstToken = true;
                 
                 await foreach (var text in _executor.InferAsync(prompt, inferenceParams))
@@ -184,7 +233,6 @@ namespace NL2SQL_CLI
                     sb.Append(text);
                     tokenCount++;
 
-                    // Show progress every 50 tokens
                     if (tokenCount % 50 == 0)
                     {
                         Console.Write(".");
