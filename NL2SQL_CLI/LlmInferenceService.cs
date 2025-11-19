@@ -153,8 +153,11 @@ namespace NL2SQL_CLI
             // Create inference params optimized for conversational responses
             var inferenceParams = new InferenceParams
             {
+                Temperature = 0.3f,  // Lower temperature for more deterministic responses
+                TopP = 0.9f,
+                RepeatPenalty = 1.3f,  // Strong penalty to prevent repetition loops
                 MaxTokens = maxTokens,
-                AntiPrompts = new[] { "\n\nUser:", "\n\nHuman:", "###END###" }
+                AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:", "SELECT COUNT(OrderID) AS TotalOrders FROM dbo.Orders" }
             };
 
             var sb = new StringBuilder();

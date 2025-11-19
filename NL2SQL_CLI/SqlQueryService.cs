@@ -209,17 +209,20 @@ namespace NL2SQL_CLI
 
             // Output instructions with examples
             sb.AppendLine("### Instructions");
-            sb.AppendLine("CRITICAL: Answer ONLY the current question. Do NOT include previous queries.");
-            sb.AppendLine("1. Write a brief explanation (1-2 sentences)");
-            sb.AppendLine("2. Write ONE SQL query that answers the question");
-            sb.AppendLine("3. SQL requirements:");
-            sb.AppendLine("   - MUST end with semicolon (;)");
-            sb.AppendLine("   - Use exact table names: Orders, Products, Customers, OrderDetails, Categories");
-            sb.AppendLine("   - Use dbo. prefix: dbo.Orders, dbo.Products, etc.");
-            sb.AppendLine("   - Use GETDATE() for current date");
-            sb.AppendLine("   - Use DATEADD(MONTH, -1, GETDATE()) for date calculations");
-            sb.AppendLine("   - Use TOP N instead of LIMIT");
-            sb.AppendLine("   - No NULLS LAST or ILIKE (not T-SQL syntax)");
+            sb.AppendLine("CRITICAL RULES:");
+            sb.AppendLine("- Answer ONLY the current question with ONE query");
+            sb.AppendLine("- Do NOT repeat the same query multiple times");
+            sb.AppendLine("- ONLY use tables that exist in the schema above");
+            sb.AppendLine("- Available tables: Orders, Products, Customers, OrderDetails, Categories, Suppliers, Employees");
+            sb.AppendLine("- Do NOT use: productdetails, productlist, or any other table not listed");
+            sb.AppendLine();
+            sb.AppendLine("SQL Format:");
+            sb.AppendLine("1. Brief explanation (1 sentence)");
+            sb.AppendLine("2. ONE SQL query ending with semicolon (;)");
+            sb.AppendLine("3. Use dbo. prefix: dbo.Orders, dbo.Products, etc.");
+            sb.AppendLine("4. Use GETDATE() for dates, DATEADD(MONTH, -1, GETDATE()) for date math");
+            sb.AppendLine("5. Use TOP N, not LIMIT");
+            sb.AppendLine("6. No NULLS LAST, ILIKE, or other non-T-SQL syntax");
             sb.AppendLine();
             sb.AppendLine("Example:");
             sb.AppendLine("To find total orders, we count rows in the Orders table.");
@@ -298,9 +301,14 @@ namespace NL2SQL_CLI
             // Remove comment blocks like /******/ that some models generate
             response = Regex.Replace(response, @"/\*+\*/", "", RegexOptions.Multiline);
             
+            // Remove question text that sometimes gets included
+            response = Regex.Replace(response, @"^Show\s+.+?\n", "", RegexOptions.IgnoreCase);
+            
             // Find all SELECT statements (including WITH/CTE) - with or without semicolons
             var pattern = @"((?:WITH[\s\S]*?)?SELECT[\s\S]*?;)";
             var matches = Regex.Matches(response, pattern, RegexOptions.IgnoreCase);
+            
+            var seenQueries = new HashSet<string>();  // Track duplicates
             
             foreach (Match match in matches)
             {
@@ -310,10 +318,19 @@ namespace NL2SQL_CLI
                 if (string.IsNullOrWhiteSpace(query) || query.StartsWith("/*") || query.StartsWith("--"))
                     continue;
                 
+                // Skip duplicate queries (Test 6 fix)
+                if (seenQueries.Contains(query))
+                    continue;
+                
+                // Skip queries that don't have FROM clause (incomplete)
+                if (!Regex.IsMatch(query, @"\bFROM\b", RegexOptions.IgnoreCase))
+                    continue;
+                
                 // Validate and clean the query
                 if (ValidateSql(query, out _))
                 {
                     queries.Add(query);
+                    seenQueries.Add(query);
                 }
             }
             
@@ -515,6 +532,18 @@ namespace NL2SQL_CLI
 
             // Security checks
             string sqlLower = sql.ToLower();
+
+            // Check for hallucinated table names
+            string[] invalidTables = { "productdetails", "productlist", "orderitems", "customerorders" };
+            foreach (var invalidTable in invalidTables)
+            {
+                if (sqlLower.Contains(invalidTable))
+                {
+                    errorMessage = $"Table '{invalidTable}' does not exist. Use: Orders, Products, OrderDetails, Categories, Customers";
+                    Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
+                    return false;
+                }
+            }
 
             // Block dangerous operations
             string[] dangerousKeywords = {
