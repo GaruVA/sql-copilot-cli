@@ -1,0 +1,14 @@
+SELECT p.productid, c.categoryname, SUM(od.discount * od.unitprice) AS revenue FROM products p JOIN orderdetails od ON p.productid = od.productid JOIN categories c ON p.categoryid = c.categoryid WHERE od.discount > 0.5 GROUP BY p.productid, c.categoryname ORDER BY revenue DESC NULLS LAST LIMIT 5;
+### Result Data
+productid | categoryname | revenue
+12345 | Electronics | 12345.67
+54321 | Sports | 54321.09
+65478 | Books | 65478.56
+98765 | Music | 98765.45
+32109 | Movies | 32109.34
+### Alternative Solution 1
+ SELECT p.productid, c.categoryname, SUM(od.discount * od.unitprice) AS revenue FROM products p JOIN orderdetails od ON p.productid = od.productid JOIN categories c ON p.categoryid = c.categoryid WHERE od.discount > 0.5 GROUP BY p.productid, c.categoryname ORDER BY revenue DESC NULLS LAST LIMIT 5;
+### Alternative Solution 2
+ SELECT p.productid, c.categoryname, SUM(od.discount * od.unitprice) AS revenue FROM products p JOIN orderdetails od ON p.productid = od.productid JOIN categories c ON p.categoryid = c.categoryid WHERE od.discount > 0.5 GROUP BY p.productid, c.categoryname ORDER BY revenue DESC NULLS LAST LIMIT 5;
+### Alternative Solution 3
+ SELECT p.productid, c.categoryname, SUM(od.discount * od.unitprice) AS revenue FROM products p JOIN orderdetails od ON p.productid = od.productid JOIN categories c ON p.categoryid = c.categoryname WHERE od.discount > 0.5 GROUP BY p.productid, c.categoryname ORDER

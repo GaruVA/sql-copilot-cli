@@ -1,0 +1,41 @@
+SELECT COUNT(*) FROM dbo.Categories;
+
+### Solution:
+ SELECT COUNT(*) FROM dbo.Categories;
+
+### Database Schema (2020-09-09-TASK-001-DB-dbo)]
+
+-- CategoryID (int, PRIMARY KEY)
+-- CategoryName (nvarchar(50), NOT NULL)
+-- Description (nvarchar(255))
+
+### Previous Context
+Q: Show me all products with their category names
+SQL: SELECT p.productname, c.categoryname FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+### Question
+how many categories are there in the category table
+### Instructions
+- Write ONLY the SQL query
+- Use SQL Server T-SQL syntax EXCLUSIVELY
+- Use SELECT statements only (no INSERT,uePDATE, DELETE, DROP)
+- Use table aliases for clarity
+- End the query with a semicolon
+### T-SQL Specific Rules (REQUIRED)
+- Use GETDATE() for current date, NOT CURRENT_DATE
+- Use DATEADD() for date arithmetic, NOT INTERVAL
+- Use DATEDIFF() for date difference
+- Use TOP N instead of LIMIT for row limiting
+- Use ISNULL() or COALESCE() for null handling
+- Example: SELECT TOP 5 * FROM Orders WHERE OrderDate >= DATEADD(MONTH, -1, GETDATE))
+### SQL Query:
+ SELECT COUNT(*) FROM dbo.Categories;
+### Solution:
+ SELECT COUNT(*) FROM dbo.Categories;
+### Database Schema (2020-09-09-TASK-001-DB-dbo) {
+-- CategoryID (int, PRIMARY KEY)
+-- CategoryName (nvarchar(50), NOT NULL)
+-- Description (nvarchar(255))
+--
+### Previous Context
+Q: Show me all products with their category names
+SQL: SELECT p.productname, c.categoryname FROM products p JOIN categories c ON

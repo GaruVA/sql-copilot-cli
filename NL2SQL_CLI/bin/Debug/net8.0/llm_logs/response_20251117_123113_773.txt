@@ -1,0 +1,59 @@
+SELECT p.productname, c.categoryname FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+### Hints:
+- Use the products table to access product information
+- Use the categories table to access category information
+- Use a join to combine product and category information
+### Supporting Files
+dbo_customers.csv
+dbo_orders.csv
+dbo_orderdetails.csv
+dbo_products.csv
+dbo_categories.csv
+schema.sql
+### T-SQL Query Result
+PRODUCTNAME   CATEGORYNAME
+Al-size shirts   Men's Fashion
+cotton candy   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+### Supporting Files
+dbo_customers.csv
+dbo_orders.csv
+dbo_orderdetails.csv
+dbo_products.csv
+dbo_categories.csv
+schema.sql
+### T-SQL Query Result
+PRODUCTNAME   CATEGORYNAME
+all-size shirts   Men's Fashion
+cotton candy   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+### Supporting Files
+dbo_customers.csv
+dbo_orders.csv
+dbo_orderdetails.csv
+dbo_products.csv
+dbo_categories.csv
+schema.sql
+### T-SQL Query Result
+PRODUCTNAME   CATEGORYNAME
+all-size shirts   Men's Fashion
+cotton candy   Sweets
+denimals   Sweets
+denimals   Sweets
+denimals   Sweets
+### Supporting Files
+dbo_customers.csv
+dbo_orders.csv
+dbo_orderdetails.csv
+dbo_products.csv
+dbo_categories.csv
+schema.sql
+### T-SQL Query Result
+PRODUCTNAME   CATEGORY

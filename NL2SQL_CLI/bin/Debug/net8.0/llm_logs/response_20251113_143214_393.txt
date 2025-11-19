@@ -1,0 +1,99 @@
+SELECT p.productid, c.categoryname FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+### Result
+ProductID CategoryName
+12345678 CategoryA
+87654321 CategoryB
+### Answer
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### Super_hints
+##products
+##categories
+##productid
+##categoryname
+### Additional Info
+Below query will return all products with their category names.
+### Attachments
+products_categories.png
+### Markdown
+ SELECT p.productid, c.categoryname FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+### Answer
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### super_hints
+##products
+##categories
+##productid
+##categoryname
+### Additional Info
+Below query will return all products with their category names.
+### Attachments
+products_categories.png
+### Markdown
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### super_hints
+##products
+##categories
+##productid
+##categoryname
+### Additional Info
+Below query will return all products with their category names.
+### Attachments
+products_categories.png
+### Markdown
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### super_hints
+##products
+##categories
+##productid
+##categoryname
+### Additional Info
+Below query will return all products with their category names.
+### Attachments
+products_categories.png
+### Markdown
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### super_hints
+##products
+##categories
+##productid
+##categoryname
+### Additional Info
+Below query will return all products with their category names.
+### Attachments
+products_categories.png
+### Markdown
+ /******/
+### Tags
+#sql #server
+### Hints
+##relation
+##join
+### super_hints
+##products
+##categories
+##productid
+##

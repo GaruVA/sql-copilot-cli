@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "dgSpecHash": "8+azgazNKGg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\communitytoolkit.highperformance\\8.4.0\\communitytoolkit.highperformance.8.4.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\llamasharp\\0.25.0\\llamasharp.0.25.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\llamasharp.backend.cpu\\0.25.0\\llamasharp.backend.cpu.0.25.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\9.0.8\\microsoft.bcl.asyncinterfaces.9.0.8.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\microsoft.extensions.ai.abstractions\\9.7.1\\microsoft.extensions.ai.abstractions.9.7.1.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\9.0.8\\microsoft.extensions.dependencyinjection.abstractions.9.0.8.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\9.0.8\\microsoft.extensions.logging.abstractions.9.0.8.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\runtime.native.system.data.sqlclient.sni\\4.4.0\\runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\runtime.win-arm64.runtime.native.system.data.sqlclient.sni\\4.4.0\\runtime.win-arm64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\runtime.win-x64.runtime.native.system.data.sqlclient.sni\\4.4.0\\runtime.win-x64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\runtime.win-x86.runtime.native.system.data.sqlclient.sni\\4.4.0\\runtime.win-x86.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\system.data.sqlclient\\4.9.0\\system.data.sqlclient.4.9.0.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\system.diagnostics.diagnosticsource\\9.0.8\\system.diagnostics.diagnosticsource.9.0.8.nupkg.sha512",
+    "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\system.numerics.tensors\\9.0.8\\system.numerics.tensors.9.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}

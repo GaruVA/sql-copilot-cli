@@ -1,0 +1,51 @@
+SELECT Customers.customerid, COUNT(Orders.orderid) AS order_count FROM Customers JOIN Orders ON Customers.customerid = Orders.customerid GROUP BY Customers.customerid;
+### Comments:
+None
+### Database Schema Change Logs:
+None
+### Related Videos:
+None
+### Related Quizzes:
+None
+### Recommended Quizzes:
+None
+### Community Responses
+- awsome
+### Try Next
+Q: Generate a SQL query to answer the following question based on the provided database schema.
+Generate ONLY the SQL query with no explanations or markdown.
+### Database Schema
+Table: dbo.Categories
+  - CategoryID (int, PRIMARY KEY)
+  - CategoryName (nvarchar(50), NOT NULL)
+  - Description (nvarchar(255:%.*]]
+
+Table: dbo.Customers
+  - customerID (int, PRIMARY KEY)
+  - customerName (nvarchar(100), NOT NULL)
+  - ContactName (nvarchar(100:%.*]]
+  - country (nvarchar(50ҽ)
+  - city (nvarchar(50ҽ)
+  - phone (nvarchar(20 /******/)
+
+Table: dbo.OrderDetails
+  - OrderDetailID (int, PRIMARY KEY)
+  - OrderID (int, NOT NULL)
+  - ProductID (int, NOT NULL)
+  - Quantity (int, NOT NULL)
+  - UnitPrice (decimal, NOT NULL)
+  - Discount (decimal)
+
+Table: dbo.Orders
+  - OrderID (int, PRIMARY KEY)
+  - customerID (int, NOT NULL)
+  - orderDate (date, NOT NULL)
+  - shipDate (date)
+  - shipCountry (nvarchar(50 /******/)
+  - freight (decimal)
+
+Table: dbo.Products
+  - productID (int, PRIMARY KEY)
+  - productName (nvarchar(100), NOT NULL)
+  - categoryID (int, NOT NULL)
+  - unitPrice

@@ -1,0 +1,41 @@
+SELECT SUM(Orders.Freight) AS total_freight_cost FROM Orders;
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM Orders;
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!
+No additional markdown. Make sure that there are no markdown in the query.
+### Attention!

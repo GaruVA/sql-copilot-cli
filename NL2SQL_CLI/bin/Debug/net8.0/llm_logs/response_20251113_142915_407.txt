@@ -1,0 +1,19 @@
+SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.Orders;
+ SELECT SUM(Orders.Freight) AS total_freight_cost FROM dbo.

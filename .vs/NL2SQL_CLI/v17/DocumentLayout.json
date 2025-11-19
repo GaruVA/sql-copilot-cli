@@ -1,0 +1,89 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|c:\\users\\gvassalaarachchi\\source\\repos\\nl2sql_cli\\nl2sql_cli\\sqlqueryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|solutionrelative:nl2sql_cli\\sqlqueryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|c:\\users\\gvassalaarachchi\\source\\repos\\nl2sql_cli\\nl2sql_cli\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|solutionrelative:nl2sql_cli\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|c:\\users\\gvassalaarachchi\\source\\repos\\nl2sql_cli\\nl2sql_cli\\llminferenceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|solutionrelative:nl2sql_cli\\llminferenceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|c:\\users\\gvassalaarachchi\\source\\repos\\nl2sql_cli\\nl2sql_cli\\nl2sql_cli.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{7701987B-D533-461B-982B-D865ECFDDA1C}|NL2SQL_CLI\\NL2SQL_CLI.csproj|solutionrelative:nl2sql_cli\\nl2sql_cli.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 672,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "NL2SQL_CLI.csproj",
+              "DocumentMoniker": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+              "RelativeDocumentMoniker": "NL2SQL_CLI\\NL2SQL_CLI.csproj",
+              "ToolTip": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+              "RelativeToolTip": "NL2SQL_CLI\\NL2SQL_CLI.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-11-12T06:47:09.821Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SqlQueryService.cs",
+              "DocumentMoniker": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\SqlQueryService.cs",
+              "RelativeDocumentMoniker": "NL2SQL_CLI\\SqlQueryService.cs",
+              "ToolTip": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\SqlQueryService.cs",
+              "RelativeToolTip": "NL2SQL_CLI\\SqlQueryService.cs",
+              "ViewState": "AgIAALUAAAAAAAAAAADwv5ABAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-12T06:54:32.858Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "LlmInferenceService.cs",
+              "DocumentMoniker": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\LlmInferenceService.cs",
+              "RelativeDocumentMoniker": "NL2SQL_CLI\\LlmInferenceService.cs",
+              "ToolTip": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\LlmInferenceService.cs",
+              "RelativeToolTip": "NL2SQL_CLI\\LlmInferenceService.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAcwCIAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-12T06:53:18.509Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\Program.cs",
+              "RelativeDocumentMoniker": "NL2SQL_CLI\\Program.cs",
+              "ToolTip": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\Program.cs",
+              "RelativeToolTip": "NL2SQL_CLI\\Program.cs",
+              "ViewState": "AgIAAMAAAAAAAAAAAAAwwCgBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-12T06:52:06.799Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

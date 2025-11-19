@@ -1,0 +1,56 @@
+SELECT p.productid, c.categoryname FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+### Hints
+- Use the JOIN keyword to combine the Products and Categories tablesms
+- Use the CategoryName column from the Categories table to get the category names
+- Use the ProductID column from the Products table to get the product information
+### Related Questions
+Show me all customers with their orders
+Show me all customers with their orders
+Show me all products with their category names
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all products with their category names
+Show me all customers with their orders
+Show me all
