@@ -106,18 +106,8 @@ namespace NL2SQL_CLI
                 response.ExtractedSqlQueries = ExtractAllSqlQueries(llmResponse);
                 Console.WriteLine($"  → [GENERATE] Found {response.ExtractedSqlQueries.Count} SQL queries");
 
-                // Update conversation history
-                _conversationHistory.Add($"Q: {naturalLanguageQuery}");
-                if (response.HasQueries)
-                {
-                    _conversationHistory.Add($"SQL: {string.Join("; ", response.ExtractedSqlQueries.Take(2))}");
-                }
-
-                // Keep only last 4 exchanges (8 entries)
-                if (_conversationHistory.Count > 8)
-                {
-                    _conversationHistory.RemoveRange(0, 2);
-                }
+                // Note: Conversation history disabled to prevent model from regenerating previous queries
+                // This ensures each query is independent and focused on the current question only
             }
             catch (Exception ex)
             {
@@ -204,24 +194,13 @@ namespace NL2SQL_CLI
             var sb = new StringBuilder();
 
             sb.AppendLine("### Task");
-            sb.AppendLine("You are a SQL expert assistant. Provide a brief explanation followed by SQL queries.");
+            sb.AppendLine("You are a SQL expert assistant. Answer ONLY the current question with ONE query.");
             sb.AppendLine();
 
             // Database schema - use relevant schema only
             sb.AppendLine("### Database Schema");
             sb.AppendLine(GetRelevantSchema(naturalLanguageQuery));
             sb.AppendLine();
-
-            // Previous context for follow-up questions
-            if (_conversationHistory.Count > 0)
-            {
-                sb.AppendLine("### Previous Context");
-                foreach (var entry in _conversationHistory)
-                {
-                    sb.AppendLine(entry);
-                }
-                sb.AppendLine();
-            }
 
             // Current question
             sb.AppendLine("### Question");
@@ -230,20 +209,22 @@ namespace NL2SQL_CLI
 
             // Output instructions with examples
             sb.AppendLine("### Instructions");
+            sb.AppendLine("CRITICAL: Answer ONLY the current question. Do NOT include previous queries.");
             sb.AppendLine("1. Write a brief explanation (1-2 sentences)");
-            sb.AppendLine("2. Then write SQL queries to answer the question");
-            sb.AppendLine("3. Each SQL query must:");
-            sb.AppendLine("   - Start with SELECT keyword");
-            sb.AppendLine("   - End with semicolon (;)");
-            sb.AppendLine("   - Use SQL Server T-SQL syntax");
+            sb.AppendLine("2. Write ONE SQL query that answers the question");
+            sb.AppendLine("3. SQL requirements:");
+            sb.AppendLine("   - MUST end with semicolon (;)");
+            sb.AppendLine("   - Use exact table names: Orders, Products, Customers, OrderDetails, Categories");
+            sb.AppendLine("   - Use dbo. prefix: dbo.Orders, dbo.Products, etc.");
             sb.AppendLine("   - Use GETDATE() for current date");
-            sb.AppendLine("   - Use DATEADD(MONTH, -1, GETDATE()) for date math");
+            sb.AppendLine("   - Use DATEADD(MONTH, -1, GETDATE()) for date calculations");
             sb.AppendLine("   - Use TOP N instead of LIMIT");
+            sb.AppendLine("   - No NULLS LAST or ILIKE (not T-SQL syntax)");
             sb.AppendLine();
-            sb.AppendLine("Example format:");
-            sb.AppendLine("To find total orders, we count all rows in the Orders table.");
+            sb.AppendLine("Example:");
+            sb.AppendLine("To find total orders, we count rows in the Orders table.");
             sb.AppendLine();
-            sb.AppendLine("SELECT COUNT(*) AS TotalOrders FROM Orders;");
+            sb.AppendLine("SELECT COUNT(*) AS TotalOrders FROM dbo.Orders;");
             sb.AppendLine();
             sb.AppendLine("### Response:");
 
@@ -263,8 +244,15 @@ namespace NL2SQL_CLI
                 lowerQuestion.Contains("order") && t == "Orders" ||
                 lowerQuestion.Contains("product") && t == "Products" ||
                 lowerQuestion.Contains("customer") && t == "Customers" ||
-                lowerQuestion.Contains("categor") && t == "Categories"
+                lowerQuestion.Contains("categor") && t == "Categories" ||
+                lowerQuestion.Contains("electronics") && t == "Categories"
             ).ToList();
+            
+            // Always include related tables for joins
+            if (relevantTables.Contains("Products") && !relevantTables.Contains("Categories"))
+                relevantTables.Add("Categories");
+            if (relevantTables.Contains("Orders") && !relevantTables.Contains("Customers") && lowerQuestion.Contains("customer"))
+                relevantTables.Add("Customers");
             
             // If no specific tables found or if query is complex, return full schema
             if (!relevantTables.Any() || lowerQuestion.Contains("all") || lowerQuestion.Contains("analyze"))
@@ -332,7 +320,7 @@ namespace NL2SQL_CLI
             // If no queries found with semicolons, try to find SELECT without semicolon
             if (queries.Count == 0)
             {
-                var fallbackPattern = @"\b((?:WITH[\s\S]*?)?SELECT[\s\S]+?FROM[\s\S]+?)(?=\n\n|User:|Human:|$)";
+                var fallbackPattern = @"\b((?:WITH[\s\S]*?)?SELECT[\s\S]+?FROM[\s\S]+?)(?=\n\n|User:|Human:|###|$)";
                 var fallbackMatches = Regex.Matches(response, fallbackPattern, RegexOptions.IgnoreCase);
                 
                 foreach (Match match in fallbackMatches)
@@ -343,6 +331,14 @@ namespace NL2SQL_CLI
                         queries.Add(query);
                     }
                 }
+            }
+            
+            // If still no queries but response mentions joining tables, construct a basic query
+            if (queries.Count == 0 && 
+                (response.ToLower().Contains("join") || response.ToLower().Contains("joining")) &&
+                response.ToLower().Contains("select"))
+            {
+                Console.WriteLine("  → [EXTRACT] WARNING: Response describes SQL but no query found - model may need stronger prompt");
             }
             
             return queries;
@@ -477,6 +473,12 @@ namespace NL2SQL_CLI
             // Remove NULLS FIRST/LAST clauses (not standard in SQL Server)
             result = Regex.Replace(result, @"\s+NULLS\s+(FIRST|LAST)\b", "", RegexOptions.IgnoreCase);
 
+            // Replace ILIKE (PostgreSQL) with LIKE (SQL Server is case-insensitive by default)
+            result = Regex.Replace(result, @"\bILIKE\b", "LIKE", RegexOptions.IgnoreCase);
+
+            // Fix incomplete queries that end with line breaks before BETWEEN
+            result = Regex.Replace(result, @"\n\s*WHERE\s+(\w+)\s*\n\s*BETWEEN", " WHERE $1 BETWEEN", RegexOptions.IgnoreCase);
+            
             // Replace LIMIT N with TOP N (case insensitive)
             result = Regex.Replace(result, @"\bLIMIT\s+(\d+)\s*;?\s*$", "TOP $1", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
