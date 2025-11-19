@@ -153,10 +153,8 @@ namespace NL2SQL_CLI
             // Create inference params optimized for conversational responses
             var inferenceParams = new InferenceParams
             {
-                Temperature = 0.5f,  // Lower temperature for more focused, deterministic responses
-                TopP = 0.9f,
                 MaxTokens = maxTokens,
-                AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:" }
+                AntiPrompts = new[] { "\n\nUser:", "\n\nHuman:", "###END###" }
             };
 
             var sb = new StringBuilder();
