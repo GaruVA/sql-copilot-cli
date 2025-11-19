@@ -22,7 +22,6 @@ namespace NL2SQL_CLI
             // Clear the context for the next query
             if (_context != null)
             {
-                Console.WriteLine("  → [DEBUG] Resetting context for next query...");
                 _context.Dispose();
                 
                 if (_model != null && _modelPath != null)
@@ -39,7 +38,6 @@ namespace NL2SQL_CLI
                     
                     _context = _model.CreateContext(parameters);
                     _executor = new InteractiveExecutor(_context);
-                    Console.WriteLine("  → [DEBUG] Context reset complete");
                 }
             }
         }

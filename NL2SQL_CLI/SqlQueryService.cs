@@ -32,6 +32,8 @@ namespace NL2SQL_CLI
         private readonly string _connectionString;
         private string? _schemaContext;
         private readonly List<string> _conversationHistory;
+        private Dictionary<string, List<string>> _tableColumns = new(); // Table -> Columns mapping
+        private HashSet<string> _validTableNames = new(); // All valid table names
 
         public SqlQueryService(
             LlmInferenceService llmService,
@@ -78,6 +80,15 @@ namespace NL2SQL_CLI
 
                 Console.WriteLine("  → Schema extracted successfully");
                 Console.WriteLine($"  → Schema size: {_schemaContext.Length} characters");
+                Console.WriteLine($"  → Tables found: {_validTableNames.Count}");
+                Console.WriteLine($"  → Total columns: {_tableColumns.Values.Sum(cols => cols.Count)}");
+                Console.WriteLine();
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("DATABASE SCHEMA CONTEXT FOR AI MODEL:");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine(_schemaContext);
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine();
             });
         }
 
@@ -122,8 +133,6 @@ namespace NL2SQL_CLI
 
         public async Task<DataTable> ExecuteQueryAsync(string sql)
         {
-            Console.WriteLine("  → [EXECUTE] Preparing to execute query...");
-            
             // Convert to T-SQL if needed
             sql = ConvertToTSql(sql);
             
@@ -212,9 +221,9 @@ namespace NL2SQL_CLI
             sb.AppendLine("CRITICAL RULES:");
             sb.AppendLine("- Answer ONLY the current question with ONE query");
             sb.AppendLine("- Do NOT repeat the same query multiple times");
-            sb.AppendLine("- ONLY use tables that exist in the schema above");
-            sb.AppendLine("- Available tables: Orders, Products, Customers, OrderDetails, Categories, Suppliers, Employees");
-            sb.AppendLine("- Do NOT use: productdetails, productlist, or any other table not listed");
+            sb.AppendLine("- ONLY use tables and columns that exist in the schema above");
+            sb.AppendLine($"- Available tables: {string.Join(", ", _validTableNames.OrderBy(t => t))}");
+            sb.AppendLine("- Do NOT invent table or column names - use ONLY what is shown in the schema");
             sb.AppendLine();
             sb.AppendLine("SQL Format:");
             sb.AppendLine("1. Brief explanation (1 sentence)");
@@ -287,16 +296,6 @@ namespace NL2SQL_CLI
         private List<string> ExtractAllSqlQueries(string response)
         {
             var queries = new List<string>();
-            
-            // Save raw response for debugging
-            try
-            {
-                var logDir = Path.Combine(Directory.GetCurrentDirectory(), "llm_logs");
-                Directory.CreateDirectory(logDir);
-                var logFile = Path.Combine(logDir, $"response_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt");
-                File.WriteAllText(logFile, response);
-            }
-            catch { }
             
             // Remove comment blocks like /******/ that some models generate
             response = Regex.Replace(response, @"/\*+\*/", "", RegexOptions.Multiline);
@@ -392,9 +391,6 @@ namespace NL2SQL_CLI
 
         private string ExtractSqlFromResponse(string llmResponse)
         {
-            Console.WriteLine("  → [EXTRACT] Starting SQL extraction...");
-            Console.WriteLine($"  → [EXTRACT] Response length: {llmResponse.Length} characters");
-            Console.WriteLine($"  → [EXTRACT] First 150 chars: {(llmResponse.Length > 150 ? llmResponse.Substring(0, 150) : llmResponse)}");
             // Save raw response for debugging (append)
             try
             {
@@ -520,28 +516,42 @@ namespace NL2SQL_CLI
         {
             errorMessage = null;
 
-            Console.WriteLine("  → [VALIDATE] Starting SQL validation...");
-            Console.WriteLine($"  → [VALIDATE] SQL length: {sql.Length}");
-
             if (string.IsNullOrWhiteSpace(sql))
             {
                 errorMessage = "Generated SQL is empty";
-                Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
                 return false;
             }
 
             // Security checks
             string sqlLower = sql.ToLower();
 
-            // Check for hallucinated table names
-            string[] invalidTables = { "productdetails", "productlist", "orderitems", "customerorders" };
-            foreach (var invalidTable in invalidTables)
+            // Dynamic validation: Check if tables used actually exist in schema
+            var tablesInQuery = ExtractTableNamesFromSql(sql);
+            foreach (var tableName in tablesInQuery)
             {
-                if (sqlLower.Contains(invalidTable))
+                if (!_validTableNames.Contains(tableName))
                 {
-                    errorMessage = $"Table '{invalidTable}' does not exist. Use: Orders, Products, OrderDetails, Categories, Customers";
-                    Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
+                    errorMessage = $"Table '{tableName}' does not exist in database. Available tables: {string.Join(", ", _validTableNames.OrderBy(t => t))}";
                     return false;
+                }
+            }
+
+            // Validate column names in SELECT clause (basic check)
+            var columnsInQuery = ExtractColumnNamesFromSql(sql);
+            foreach (var columnInfo in columnsInQuery)
+            {
+                var table = columnInfo.Item1;
+                var column = columnInfo.Item2;
+                
+                if (!string.IsNullOrEmpty(table) && _tableColumns.ContainsKey(table))
+                {
+                    // Allow *, aggregate functions, and aliases
+                    if (!_tableColumns[table].Contains(column, StringComparer.OrdinalIgnoreCase) && 
+                        column != "*" && !column.Contains("(") && !IsCommonSqlKeyword(column))
+                    {
+                        errorMessage = $"Column '{column}' does not exist in table '{table}'. Available columns: {string.Join(", ", _tableColumns[table])}";
+                        return false;
+                    }
                 }
             }
 
@@ -557,7 +567,6 @@ namespace NL2SQL_CLI
                 if (sqlLower.Contains(keyword))
                 {
                     errorMessage = $"SQL contains forbidden operation: {keyword.Trim().ToUpper()}";
-                    Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
                     return false;
                 }
             }
@@ -566,7 +575,6 @@ namespace NL2SQL_CLI
             if (!sqlLower.Contains("select"))
             {
                 errorMessage = "SQL must contain a SELECT statement";
-                Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
                 return false;
             }
 
@@ -576,12 +584,71 @@ namespace NL2SQL_CLI
             if (openParens != closeParens)
             {
                 errorMessage = $"Mismatched parentheses in SQL (open: {openParens}, close: {closeParens})";
-                Console.WriteLine($"  → [VALIDATE] FAIL: {errorMessage}");
                 return false;
             }
 
-            Console.WriteLine("  → [VALIDATE] PASS: SQL validation successful");
             return true;
+        }
+
+        private List<string> ExtractTableNamesFromSql(string sql)
+        {
+            var tables = new List<string>();
+            
+            // Match FROM/JOIN table patterns: FROM/JOIN [schema.]tablename [AS alias]
+            var pattern = @"(?:FROM|JOIN)\s+(?:dbo\.)?(\ w+)(?:\s+(?:AS\s+)?\w+)?";
+            var matches = Regex.Matches(sql, pattern, RegexOptions.IgnoreCase);
+            
+            foreach (Match match in matches)
+            {
+                var tableName = match.Groups[1].Value;
+                if (!tables.Contains(tableName, StringComparer.OrdinalIgnoreCase))
+                {
+                    tables.Add(tableName);
+                }
+            }
+            
+            return tables;
+        }
+
+        private List<(string Table, string Column)> ExtractColumnNamesFromSql(string sql)
+        {
+            var columns = new List<(string, string)>();
+            
+            // Extract SELECT clause
+            var selectMatch = Regex.Match(sql, @"SELECT\s+(.*?)\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (!selectMatch.Success) return columns;
+            
+            var selectClause = selectMatch.Groups[1].Value;
+            
+            // Match patterns like: table.column, alias.column, or just column
+            var pattern = @"(?:(\w+)\.)?(\ w+)";
+            var matches = Regex.Matches(selectClause, pattern);
+            
+            foreach (Match match in matches)
+            {
+                var table = match.Groups[1].Value; // May be empty
+                var column = match.Groups[2].Value;
+                
+                // Skip SQL keywords and functions
+                if (!IsSqlKeyword(column))
+                {
+                    columns.Add((table, column));
+                }
+            }
+            
+            return columns;
+        }
+
+        private bool IsSqlKeyword(string word)
+        {
+            var keywords = new[] { "AS", "TOP", "DISTINCT", "COUNT", "SUM", "AVG", "MAX", "MIN", "GROUP", "ORDER", "BY", "ASC", "DESC" };
+            return keywords.Contains(word, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private bool IsCommonSqlKeyword(string word)
+        {
+            var keywords = new[] { "AS", "TOP", "DISTINCT", "COUNT", "SUM", "AVG", "MAX", "MIN", "CAST", "CONVERT", "CASE", "WHEN", "THEN", "ELSE", "END" };
+            return keywords.Contains(word, StringComparer.OrdinalIgnoreCase);
         }
 
         private async Task<DataTable> ExecuteSqlQueryAsync(string sql)
@@ -605,6 +672,8 @@ namespace NL2SQL_CLI
         private string ExtractDatabaseSchema()
         {
             var sb = new StringBuilder();
+            _tableColumns.Clear();
+            _validTableNames.Clear();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -635,6 +704,9 @@ namespace NL2SQL_CLI
                     WHERE t.TABLE_TYPE = 'BASE TABLE'
                     ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME, c.ORDINAL_POSITION";
 
+                sb.AppendLine("Database Schema:");
+                sb.AppendLine();
+
                 using (var cmd = new SqlCommand(tablesQuery, connection))
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -651,7 +723,12 @@ namespace NL2SQL_CLI
                             if (currentTable != null)
                                 sb.AppendLine();
 
+                            // Track valid table names (without schema prefix for matching)
+                            _validTableNames.Add(tableName);
+                            _tableColumns[tableName] = new List<string>();
+
                             sb.AppendLine($"Table: {fullTableName}");
+                            sb.AppendLine("Columns:");
                             currentTable = fullTableName;
                         }
 
@@ -659,6 +736,12 @@ namespace NL2SQL_CLI
                         string dataType = reader["DATA_TYPE"].ToString();
                         string isPk = reader["IS_PRIMARY_KEY"].ToString();
                         string nullable = reader["IS_NULLABLE"].ToString();
+
+                        // Track column for this table
+                        if (!string.IsNullOrEmpty(tableName))
+                        {
+                            _tableColumns[tableName].Add(columnName);
+                        }
 
                         sb.Append($"  - {columnName} ({dataType}");
 
