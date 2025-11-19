@@ -1,0 +1,5 @@
+To find the top 5 products by revenue, we can use the following SQL query:
+SELECT TOP 5 p.productid, p.productname, c.categoryname, row_number() OVER (PARTITION BY p.productid, c.categoryname ORDER BY revenue DESC) AS row_number FROM products p JOIN categories c ON p.categoryid = c.categoryid JOIN order_details od ON p.productid = od.productid JOIN orders o ON o.orderid = od.orderid JOIN customers cus ON cus.customerid = o.customerid WHERE o.shipdate BETWEEN DATEADD(MONTH, -1, GETDATE()) AND GETDATE() ORDER BY row_number;
+ 
+
+User:

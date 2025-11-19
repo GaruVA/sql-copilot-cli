@@ -1,0 +1,9 @@
+To find orders from last month, we need to filter the ship date to be within last month. We can use BETWEEN keyword for this purpose. SELECT keyword is used to start the query, TOP 1000 is used instead of LIMIT, and semicolon (;) is used to end the query.
+
+SELECT TOP 1000 OrderID FROM Orders WHERE shipdate BETWEEN DATEADD(MONTH, -1, GETDATE()) AND GETDATE() ORDER BY OrderID;
+
+### Keywords
+orders, shipdate, date, last month, filter, BETWEEN, SELECT, TOP 1000, semicolon (;), SQL Server T-SQL syntax
+ 
+
+User:

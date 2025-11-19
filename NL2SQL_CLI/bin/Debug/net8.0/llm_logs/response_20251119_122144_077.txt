@@ -1,0 +1,7 @@
+Show me all products with their category names
+
+### Keywords
+Products.ProductName, Categories.CategoryName
+ 
+
+User:

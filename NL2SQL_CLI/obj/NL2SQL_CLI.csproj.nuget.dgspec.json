@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj": {}
+    "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\NL2SQL_CLI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj": {
+    "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\NL2SQL_CLI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+        "projectUniqueName": "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
         "projectName": "NL2SQL_CLI",
-        "projectPath": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+        "projectPath": "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
         "packagesPath": "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\obj\\",
+        "outputPath": "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\DevExpress 24.2\\Components\\Offline Packages",

@@ -1,0 +1,11 @@
+1. Brief explanation:
+To find total orders for each customer, we can use COUNT(*) function to count all rows in the Orders table for each customer and then group by the customerID to get the total number of orders for each customer.
+
+2. SQL queries:
+Total orders for each customer:
+SELECT Customers.CustomerID, COUNT(Orders.OrderID) AS TotalOrders
+FROM Customers JOIN Orders ON Customers.customerID = Orders.customerID
+GROUP BY Customers.customerID;
+ 
+
+User:

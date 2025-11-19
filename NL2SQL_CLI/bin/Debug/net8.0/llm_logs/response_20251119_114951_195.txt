@@ -1,0 +1,10 @@
+To find products in the Electronics category with more than 100 units in stock, we can use the following SQL query:
+SELECT p.productname, c.categoryname, SUM(pd.unitsinstock) AS total_units_ordered
+FROM dbo.products p JOIN dbo.category c ON p.categoryid = c.categoryid JOIN dbo.productdetails pd ON p.productid = pd.productid
+WHERE c.categoryname ilike '%Electtronics%' AND p.unitsinstock > 100
+GROUP BY p.productname, c.categoryname;
+ORDER BY total_units_requested DESC NULLS LAST;
+
+ 
+
+User:

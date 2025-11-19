@@ -1,0 +1,5 @@
+To find total freight cost, we use the following SQL query:
+SELECT SUM(freight) AS TotalFreightCost FROM Orders;
+ 
+
+User:

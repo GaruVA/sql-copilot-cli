@@ -1,0 +1,7 @@
+To find orders from last month, we use the DATEADD function to subtract one month from the current date, and then filter orders with a ship date within the resulting date range.
+
+SELECT COUNT(*) AS TotalOrders FROM dbo.Orders WHERE ShipDate BETWEEN DATEADD(MONTH, -1, GETDATE()) AND GETDATE;
+ /******/
+ 
+
+User:

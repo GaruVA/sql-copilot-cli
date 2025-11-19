@@ -1,0 +1,10 @@
+To find orders from last month, we use the dateadd function to subtract one month from the current date, and filter for orders with ship date within that range.
+
+SELECT OrderID, CustomerID, OrderDate, ShipDate, ShipCountry, Freight
+FROM dbo.Orders
+WHERE ShipDate BETWEEN DATEADD(MONTH, -1, GETDATE()) AND GETDATE()
+ORDER BY OrderDate DESC;
+ /******/
+ 
+
+User:

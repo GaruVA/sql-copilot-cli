@@ -1,0 +1,4 @@
+SQL: SELECT Products.ProductName, Categories.CategoryName FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID ORDER BY Products.ProductName NULLS LAST;
+ 
+
+User:

@@ -1,0 +1,5 @@
+SQL: WITH revenue_rank AS (SELECT ProductID, CategoryID, UnitPrice, UnitsInStock, rank() OVER (PARTITION BY CategoryID ORDER BY (UnitPrice * UnitsInStock) DESC) AS rank FROM Products), top_products AS (SELECT ProductName, CategoryName FROM revenue_rank WHERE rank <= 5)
+SELECT tp.ProductName, tc.CategoryName, tp.UnitPrice, tp.UnitsInStock FROM top_products tp JOIN revenue_rank rr ON tp.ProductName = rr.ProductName JOIN categories tc ON rr.CategoryID = tc.CategoryID;
+ 
+
+User:

@@ -1,0 +1,7 @@
+To get all products with their category names, we can join the Products and Categories tablesms to get the category name for each product.
+
+SELECT Products.ProductID, Categories.CategoryName
+FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID;
+ 
+
+User:

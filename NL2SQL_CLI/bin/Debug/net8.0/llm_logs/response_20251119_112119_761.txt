@@ -1,0 +1,10 @@
+Products with their category names.
+
+SELECT p.productid, c.categoryname
+FROM products p JOIN categories c ON p.categoryid = c.categoryid;
+
+### Keywords
+product, category, name
+ 
+
+User:

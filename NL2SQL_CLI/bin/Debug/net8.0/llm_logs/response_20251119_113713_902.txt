@@ -1,0 +1,6 @@
+To find total freight cost, we can use the SUM function to add up all the freight values in the Orders table:
+
+SELECT SUM(Orders.Freight) AS TotalFreightCost FROM Orders;
+ 
+
+User:

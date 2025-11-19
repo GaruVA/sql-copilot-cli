@@ -1,0 +1,9 @@
+To find total freight cost, we add all discounts in the OrderDetails table.
+
+SELECT SUM(Discount) AS TotalFreightCost FROM OrderDetails;
+
+### Keywords
+freight, total, cost
+ 
+
+User:

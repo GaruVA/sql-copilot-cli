@@ -1,0 +1,9 @@
+To find total orders, we count all rows in the Orders table.
+
+SELECT COUNT(*) AS TotalOrders FROM Orders;
+
+### Keywords
+orders total
+ 
+
+User:

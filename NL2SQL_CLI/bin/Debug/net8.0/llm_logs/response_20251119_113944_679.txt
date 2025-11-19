@@ -1,0 +1,24 @@
+To find total orders, we count all rows in the Orders table.
+
+SELECT COUNT(*) AS TotalOrders FROM dbo.Orders;
+
+To find total freight cost, we sum all the freight column from the Orders table.
+
+SELECT SUM(Orders.Freight) AS TotalFreightCost FROM dbo.Orders;
+
+To list products with their category names, we join the Products and Categories tableses.
+
+SELECT Products.ProductID, Products.ProductName, Categories.CategoryName
+FROM dbo.Products AS Products JOIN dbo.Categories AS Categories ON Products.CategoryID = Categories.CategoryID;
+
+To show orders from last month, we use a WHERE clause with a BETWEEN clause.
+
+SELECT OrderID, CustomerID, OrderDate, ShipDate, ShipCountry, Freight
+FROM dbo.Orders
+WHERE ShipDate BETWEEN DATEADD(MONTH, -1, GETDATE()) AND GETDATE()
+ORDER BY OrderDate DESC;
+
+To find the top 5 products by revenue, we use a subquery to get the revenue for each product, then we use the TOP clause to get the top 5 products by revenue.
+
+SELECT TOP 5 ProductName, CategoryName, Revenue
+FROM (SELECT Products.ProductName, Categories.CategoryName, Products.ProductID, (SELECT SUM(OrderDetails.UnitsInStock * Products.UnitPrice) AS Revenue FROM dbo.Products AS Products JOIN dbo.OrderDetails ON Products.ProductID = OrderDetails.ProductID JOIN dbo.Orders ON OrderDetails.OrderID =

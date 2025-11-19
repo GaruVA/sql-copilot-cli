@@ -154,8 +154,6 @@ namespace NL2SQL_CLI
             var inferenceParams = new InferenceParams
             {
                 MaxTokens = maxTokens,
-                Temperature = 0.7f,
-                TopP = 0.9f,
                 AntiPrompts = new[] { "\n\nUser:", "\n\nHuman:", "###END###" }
             };
 

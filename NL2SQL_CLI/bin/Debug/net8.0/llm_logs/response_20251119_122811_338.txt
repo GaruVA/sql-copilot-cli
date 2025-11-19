@@ -1,0 +1,8 @@
+Show products in the Electronics category with more than 100 units in stock
+
+SELECT p.productname, c.categoryname, p.unitsinstock
+FROM products p JOIN category c ON p.categoryid = c.categoryid
+WHERE c.categoryname = 'Electtronics' AND p.unitsinstock > 100
+ 
+
+User:

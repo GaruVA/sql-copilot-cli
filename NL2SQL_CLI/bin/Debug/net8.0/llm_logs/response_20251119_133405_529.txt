@@ -1,0 +1,4 @@
+SELECT ProductName, CategoryName, UnitPrice, UnitsInStock FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID WHERE CategoryName = 'Electtronics' AND UnitsInStock > 100
+ 
+
+User:

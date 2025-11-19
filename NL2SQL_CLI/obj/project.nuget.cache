@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "8+azgazNKGg=",
+  "dgSpecHash": "/kr7nlwpQ+k=",
   "success": true,
-  "projectFilePath": "C:\\Users\\gvassalaarachchi\\source\\repos\\NL2SQL_CLI\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
+  "projectFilePath": "C:\\Users\\gvassalaarachchi\\source\\repos\\sql-copilot-cli\\NL2SQL_CLI\\NL2SQL_CLI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\communitytoolkit.highperformance\\8.4.0\\communitytoolkit.highperformance.8.4.0.nupkg.sha512",
     "C:\\Users\\gvassalaarachchi\\.nuget\\packages\\llamasharp\\0.25.0\\llamasharp.0.25.0.nupkg.sha512",

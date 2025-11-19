@@ -1,0 +1,9 @@
+To find orders from last month, we can use the Orders.OrderDate column to filter for orders within the last month.
+
+SELECT OrderID, CustomerID, OrderDate, ShipDate, ShipCountry, Freight
+FROM Orders
+WHERE OrderDate >= DATEADD(MONTH, -1, GETDATE())
+ORDER BY OrderID;
+ 
+
+User:

@@ -1,0 +1,4 @@
+Use SELECT SUM(Orders.Freight) AS total_freight_cost FROM Orders;
+ 
+
+User:

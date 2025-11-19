@@ -1,0 +1,4 @@
+To find total orders, we count all rows in the Orders table.
+ 
+
+User:

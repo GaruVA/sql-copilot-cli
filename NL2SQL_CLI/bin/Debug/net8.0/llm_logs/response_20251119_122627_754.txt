@@ -1,0 +1,6 @@
+To find orders from last month, we use the DATEADD() function to subtract 1 month from the current date and then select all orders with an order date greater than or equal to the resulting date.
+
+SELECT COUNT(*) AS TotalOrders FROM Orders WHERE OrderDate >= DATEADD(MONTH, -1, GETDATE());
+ 
+
+User:

@@ -1,0 +1,4 @@
+Products.ProductName, Categories.CategoryName, Products.UnitsInStock FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID WHERE Categories.CategoryName = 'Electtronics' AND Products.UnitsInStock > 100
+ 
+
+User:

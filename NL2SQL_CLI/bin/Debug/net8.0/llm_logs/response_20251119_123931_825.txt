@@ -1,0 +1,9 @@
+To find total freight cost, we can use the following SQL query:
+
+SELECT SUM(Orders.Freight) AS TotalFreightCost FROM Orders;
+
+### Keywords
+sql, total, freight, cost, orders
+ 
+
+User:

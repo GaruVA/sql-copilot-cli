@@ -1,0 +1,4 @@
+Write a brief explanation (1-2 sentences) followed by SQL queries to answer the question.
+ 
+
+User:

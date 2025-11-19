@@ -1,0 +1,5 @@
+Show me all products with their category names
+SQL: SELECT p.productname, c.categoryname FROM products p JOIN category c ON p.categoryid = c.categoryid;
+ 
+
+User:

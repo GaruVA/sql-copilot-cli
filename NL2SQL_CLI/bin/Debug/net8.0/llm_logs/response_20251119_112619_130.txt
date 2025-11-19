@@ -1,0 +1,6 @@
+To find products with category name Electronics and more than 100 units in stock, use the SELECT statement below:
+
+SELECT p.productid, p.productname, c.categoryname, row_number() OVER (PARTITION BY p.productid, c.categoryname ORDER BY unitsinstock DESC) AS row_number FROM products p JOIN categories c ON p.categoryid = c.categoryid WHERE c.categoryname ilike '%Electtronics%' AND unitsinstock > 100 ORDER BY row_number
+ 
+
+User:

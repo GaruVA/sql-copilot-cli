@@ -1,0 +1,8 @@
+### Keyword Response
+sql server total freight cost
+
+### Command Response
+sql server SELECT SUM(Orders.Freight) AS TotalFreightCost FROM Orders;
+ 
+
+User:

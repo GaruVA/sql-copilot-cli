@@ -1,0 +1,9 @@
+To find total orders for each customer, we join the Orders table to the Customers table on the customerID column and then group by the customerID to get a count of orders for each customer.
+
+SELECT Customers.customerID, COUNT(Orders.orderID) AS total_orders
+FROM dbo.Customers JOIN dbo.Orders ON dbo.customers.customerid = dbo.orders.customerid
+GROUP BY Customers.customerid
+ORDER BY total_orders DESC NULLS LAST;
+ 
+
+User:

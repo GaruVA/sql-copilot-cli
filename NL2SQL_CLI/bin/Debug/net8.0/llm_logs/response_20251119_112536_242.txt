@@ -1,0 +1,11 @@
+To find total orders for each customer, we use a subquery to find the total orders for each customer and join it back to the main query to get the customer name.
+
+SELECT c.customername, COUNT(*) AS total_orders
+FROM customers c JOIN (SELECT customerid, COUNT(*) AS total_orders FROM orders GROUP BY customerid) AS subquery ON c.customerid = subquery.customerid
+GROUP BY c.customername, subquery.total_orders;
+
+### Keywords
+orders, total orders, customer name, subquery
+ 
+
+User:

@@ -1,0 +1,4 @@
+To find all products with their category names, we join the Products and Categories tableses to create a new table with the product name and category name.
+ 
+
+User:
