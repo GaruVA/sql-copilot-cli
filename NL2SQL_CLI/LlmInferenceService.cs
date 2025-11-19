@@ -151,11 +151,10 @@ namespace NL2SQL_CLI
             var startTime = DateTime.Now;
 
             // Create inference params optimized for conversational responses
+            // Note: Temperature, TopP, RepeatPenalty not supported in this LLamaSharp version
+            // These would need to be set in ModelParams during initialization
             var inferenceParams = new InferenceParams
             {
-                Temperature = 0.3f,  // Lower temperature for more deterministic responses
-                TopP = 0.9f,
-                RepeatPenalty = 1.3f,  // Strong penalty to prevent repetition loops
                 MaxTokens = maxTokens,
                 AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:", "SELECT COUNT(OrderID) AS TotalOrders FROM dbo.Orders" }
             };
