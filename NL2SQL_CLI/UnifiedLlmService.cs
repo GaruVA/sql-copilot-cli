@@ -5,15 +5,17 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using LLama;
+using LLama.Common;
 
 namespace NL2SQL_CLI
 {
     public class UnifiedLlmService : IDisposable
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        private LLama.Common.LLamaWeights? _localModel;
-        private LLama.LLamaContext? _localContext;
-        private LLama.InteractiveExecutor? _localExecutor;
+        private LLamaWeights? _localModel;
+        private LLamaContext? _localContext;
+        private InteractiveExecutor? _localExecutor;
         
         private string _providerType; // "groq", "ollama", "local"
         private string _apiKey;
@@ -159,17 +161,17 @@ namespace NL2SQL_CLI
                 throw new FileNotFoundException($"Model file not found: {modelPath}");
             }
 
-            var parameters = new LLama.Common.ModelParams(modelPath)
+            var parameters = new ModelParams(modelPath)
             {
                 ContextSize = 4096,
                 GpuLayerCount = 0,
-                Threads = (uint)Math.Max(1, Environment.ProcessorCount - 2),
+                Threads = (int?)Math.Max(1, Environment.ProcessorCount - 2),
                 BatchSize = 512
             };
 
-            _localModel = LLama.Common.LLamaWeights.LoadFromFile(parameters);
+            _localModel = LLamaWeights.LoadFromFile(parameters);
             _localContext = _localModel.CreateContext(parameters);
-            _localExecutor = new LLama.InteractiveExecutor(_localContext);
+            _localExecutor = new InteractiveExecutor(_localContext);
 
             _providerType = "local";
             ActiveProviderName = "Local GGUF (SQLCoder 7B)";
@@ -259,7 +261,7 @@ namespace NL2SQL_CLI
             if (_localExecutor == null)
                 throw new InvalidOperationException("Local model not initialized");
 
-            var inferenceParams = new LLama.Common.InferenceParams
+            var inferenceParams = new InferenceParams
             {
                 MaxTokens = maxTokens,
                 AntiPrompts = new[] { "\n\n###", "\n\nUser:", "\n\nHuman:", "\n\nQuestion:" }
