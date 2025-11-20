@@ -28,13 +28,27 @@ namespace NL2SQL_CLI
 
     public class SqlQueryService
     {
-        private readonly LlmInferenceService _llmService;
+        private readonly object _llmService; // Can be LlmInferenceService or UnifiedLlmService
         private readonly string _connectionString;
         private string? _schemaContext;
         private readonly List<string> _conversationHistory;
         private Dictionary<string, List<string>> _tableColumns = new(); // Table -> Columns mapping
         private HashSet<string> _validTableNames = new(); // All valid table names
 
+        // Expose schema context for multi-step orchestrator
+        public string SchemaContext => _schemaContext ?? string.Empty;
+
+        // Constructor for UnifiedLlmService (multi-step mode)
+        public SqlQueryService(
+            UnifiedLlmService llmService,
+            string connectionString = "Server=localhost\\SQLEXPRESS;Database=SampleDB;Integrated Security=true;TrustServerCertificate=true;")
+        {
+            _llmService = llmService;
+            _connectionString = connectionString;
+            _conversationHistory = new List<string>();
+        }
+
+        // Constructor for LlmInferenceService (single-query mode, backward compatibility)
         public SqlQueryService(
             LlmInferenceService llmService,
             string connectionString = "Server=localhost\\SQLEXPRESS;Database=SampleDB;Integrated Security=true;TrustServerCertificate=true;")
@@ -107,7 +121,21 @@ namespace NL2SQL_CLI
 
                 // Generate conversational response using LLM
                 Console.WriteLine("  → [GENERATE] Calling LLM for conversational response...");
-                string llmResponse = await _llmService.GenerateResponseAsync(prompt, maxTokens: 384);
+                
+                string llmResponse;
+                if (_llmService is UnifiedLlmService unifiedService)
+                {
+                    llmResponse = await unifiedService.GenerateResponseAsync(prompt, maxTokens: 384);
+                }
+                else if (_llmService is LlmInferenceService inferenceService)
+                {
+                    llmResponse = await inferenceService.GenerateResponseAsync(prompt, maxTokens: 384);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Unknown LLM service type");
+                }
+                
                 Console.WriteLine($"  → [GENERATE] Response received: {llmResponse.Length} characters");
 
                 response.FullAiResponse = llmResponse;

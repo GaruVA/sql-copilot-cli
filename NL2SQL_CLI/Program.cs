@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace NL2SQL_CLI
@@ -10,33 +11,34 @@ namespace NL2SQL_CLI
         static async Task Main(string[] args)
         {
             Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║     Natural Language to SQL - CLI Test Version            ║");
-            Console.WriteLine("║     Testing AI Model Before WinForms Integration          ║");
+            Console.WriteLine("║     Natural Language to SQL - Multi-Step Reasoning        ║");
+            Console.WriteLine("║     Advanced AI-Powered Query Analysis                    ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
             Console.WriteLine();
 
             // Initialize services
-            var llmService = new LlmInferenceService();
-            var sqlService = new SqlQueryService(llmService);
+            var unifiedLlmService = new UnifiedLlmService();
+            SqlQueryService sqlService;
+            MultiStepQueryOrchestrator orchestrator = null;
 
             try
             {
-                // Step 1: Load AI Model
-                Console.WriteLine("[STEP 1] Loading AI Model...");
-                Console.WriteLine("This will take 30-60 seconds on first run...");
+                // Step 1: Initialize LLM
+                Console.WriteLine("[STEP 1] Initializing LLM Service...");
                 Console.WriteLine();
 
                 var sw = Stopwatch.StartNew();
-                await llmService.InitializeAsync();
+                await unifiedLlmService.InitializeAsync();
                 sw.Stop();
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"✓ Model loaded successfully in {sw.Elapsed.TotalSeconds:F1} seconds");
+                Console.WriteLine($"✓ {unifiedLlmService.ActiveProviderName} ready in {sw.Elapsed.TotalSeconds:F1} seconds");
                 Console.ResetColor();
                 Console.WriteLine();
 
-                // Step 2: Initialize SQL Service (extract schema)
+                // Step 2: Initialize SQL Service
                 Console.WriteLine("[STEP 2] Connecting to database and extracting schema...");
+                sqlService = new SqlQueryService(unifiedLlmService);
                 sw.Restart();
                 await sqlService.InitializeAsync();
                 sw.Stop();
@@ -46,13 +48,21 @@ namespace NL2SQL_CLI
                 Console.ResetColor();
                 Console.WriteLine();
 
-                // Step 3: Interactive Query Loop
+                // Step 3: Initialize orchestrator
+                orchestrator = new MultiStepQueryOrchestrator(
+                    unifiedLlmService, 
+                    sqlService, 
+                    sqlService.SchemaContext
+                );
+
+                // Step 4: Interactive Query Loop
                 Console.WriteLine("[STEP 3] Ready for queries!");
                 Console.WriteLine();
                 Console.WriteLine("═══════════════════════════════════════════════════════════");
-                Console.WriteLine("Commands:");
-                Console.WriteLine("  - Type your question in natural language");
-                Console.WriteLine("  - Type 'test' to run automatic test suite");
+                Console.WriteLine("Query Modes:");
+                Console.WriteLine("  - Type your question for single-query mode");
+                Console.WriteLine("  - Type 'multi' + question for multi-step reasoning");
+                Console.WriteLine("  - Type 'test' to run single-query test suite");
                 Console.WriteLine("  - Type 'exit' or 'quit' to exit");
                 Console.WriteLine("═══════════════════════════════════════════════════════════");
                 Console.WriteLine();
@@ -74,12 +84,23 @@ namespace NL2SQL_CLI
 
                     if (input.Equals("test", StringComparison.OrdinalIgnoreCase))
                     {
-                        await RunTestSuite(sqlService, llmService);
+                        await RunTestSuite(sqlService, unifiedLlmService);
                         continue;
                     }
 
-                    // Process the query
-                    await ProcessQuery(sqlService, llmService, input);
+                    // Check for multi-step mode
+                    if (input.StartsWith("multi ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string question = input.Substring(6).Trim();
+                        unifiedLlmService.ResetContext();
+                        await ProcessMultiStepQuery(orchestrator, question);
+                    }
+                    else
+                    {
+                        // Single-query mode
+                        unifiedLlmService.ResetContext();
+                        await ProcessQuery(sqlService, unifiedLlmService, input);
+                    }
                 }
 
                 Console.WriteLine();
@@ -96,14 +117,14 @@ namespace NL2SQL_CLI
             }
             finally
             {
-                llmService?.Dispose();
+                unifiedLlmService?.Dispose();
             }
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
 
-        static async Task ProcessQuery(SqlQueryService sqlService, LlmInferenceService llmService, string naturalLanguageQuery)
+        static async Task ProcessQuery(SqlQueryService sqlService, UnifiedLlmService llmService, string naturalLanguageQuery)
         {
             Console.WriteLine();
             Console.WriteLine("─────────────────────────────────────────────────────────────");
@@ -143,6 +164,61 @@ namespace NL2SQL_CLI
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"✗ Error: {ex.Message}");
+                Console.ResetColor();
+            }
+
+            Console.WriteLine();
+        }
+
+        static async Task ProcessMultiStepQuery(MultiStepQueryOrchestrator orchestrator, string question)
+        {
+            try
+            {
+                var plan = await orchestrator.ExecuteMultiStepQueryAsync(question);
+
+                // Display summary of all steps
+                Console.WriteLine();
+                Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
+                Console.WriteLine("║              MULTI-STEP EXECUTION SUMMARY                  ║");
+                Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
+                Console.WriteLine();
+                Console.WriteLine($"Original Question: {plan.OriginalQuestion}");
+                Console.WriteLine($"Total Steps: {plan.Steps.Count}");
+                Console.WriteLine($"Executed: {plan.Steps.Count(s => s.WasExecuted)}");
+                Console.WriteLine($"Skipped: {plan.Steps.Count(s => !s.WasExecuted)}");
+                Console.WriteLine();
+
+                foreach (var step in plan.Steps)
+                {
+                    Console.WriteLine($"Step {step.StepNumber}: {step.Explanation}");
+                    if (step.WasExecuted)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"  ✓ Executed - {step.Results?.Rows.Count ?? 0} rows in {step.ExecutionTime.TotalSeconds:F2}s");
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"  ⊘ Skipped");
+                        Console.ResetColor();
+                    }
+                }
+
+                if (plan.IsComplete && !string.IsNullOrEmpty(plan.FinalSummary))
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine("FINAL ANSWER");
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine(plan.FinalSummary);
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"✗ Multi-step execution failed: {ex.Message}");
                 Console.ResetColor();
             }
 
@@ -275,7 +351,7 @@ namespace NL2SQL_CLI
             Console.WriteLine();
         }
 
-        static async Task RunTestSuite(SqlQueryService sqlService, LlmInferenceService llmService)
+        static async Task RunTestSuite(SqlQueryService sqlService, UnifiedLlmService llmService)
         {
             Console.WriteLine();
             Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
