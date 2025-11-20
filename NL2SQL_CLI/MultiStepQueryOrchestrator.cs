@@ -283,10 +283,10 @@ namespace NL2SQL_CLI
             sb.AppendLine("You have TWO options:");
             sb.AppendLine();
             sb.AppendLine("OPTION 1: Generate the next SQL query");
-            sb.AppendLine("Format:");
+            sb.AppendLine("Format (NO markdown code blocks, plain text only):");
             sb.AppendLine("EXPLANATION: [One sentence explaining this step]");
             sb.AppendLine("SQL:");
-            sb.AppendLine("[Your T-SQL query here];");
+            sb.AppendLine("SELECT ... FROM dbo.TableName WHERE ...;");
             sb.AppendLine("###");
             sb.AppendLine();
             sb.AppendLine("OPTION 2: If all necessary data has been gathered, provide final summary");
@@ -341,12 +341,22 @@ namespace NL2SQL_CLI
                 ? explanationMatch.Groups[1].Value.Trim()
                 : $"Step {stepNumber}";
 
-            // Parse SQL query
+            // Parse SQL query - handle both plain SQL and markdown code blocks
             var sqlMatch = Regex.Match(
                 aiResponse,
-                @"SQL:\s*(.+?);",
+                @"SQL:\s*```(?:sql)?\s*(SELECT[\s\S]+?)```",
                 RegexOptions.Singleline | RegexOptions.IgnoreCase
             );
+
+            if (!sqlMatch.Success)
+            {
+                // Try without markdown code blocks
+                sqlMatch = Regex.Match(
+                    aiResponse,
+                    @"SQL:\s*(SELECT[\s\S]+?)(?=###|$)",
+                    RegexOptions.Singleline | RegexOptions.IgnoreCase
+                );
+            }
 
             if (!sqlMatch.Success)
             {
@@ -359,7 +369,11 @@ namespace NL2SQL_CLI
             }
 
             string sqlQuery = sqlMatch.Success
-                ? sqlMatch.Groups[1].Value.Trim().TrimEnd(';').Trim()
+                ? sqlMatch.Groups[1].Value.Trim()
+                    .Replace("```sql", "")
+                    .Replace("```", "")
+                    .TrimEnd(';')
+                    .Trim()
                 : null;
 
             return (false, null, explanation, sqlQuery);
